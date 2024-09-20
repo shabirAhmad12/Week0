@@ -1,8 +1,5 @@
-
-
 import csv
 import sys
-
 from util import Node, StackFrontier, QueueFrontier
 
 # Maps names to a set of corresponding person_ids
@@ -14,13 +11,12 @@ people = {}
 # Maps movie_ids to a dictionary of: title, year, stars (a set of person_ids)
 movies = {}
 
-
 def load_data(directory):
     """
     Load data from CSV files into memory.
     """
     # Load people
-    directory="D:\CS50_AI_project\Degrees\small"
+    directory="D:\CS50_AI_project\Degrees\small"  # Update path if needed
     with open(f"{directory}/people.csv", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -54,7 +50,6 @@ def load_data(directory):
             except KeyError:
                 pass
 
-
 def main():
     if len(sys.argv) > 2:
         sys.exit("Usage: python degrees.py [directory]")
@@ -86,7 +81,6 @@ def main():
             movie = movies[path[i + 1][0]]["title"]
             print(f"{i + 1}: {person1} and {person2} starred in {movie}")
 
-
 def shortest_path(source, target):
     """
     Returns the shortest list of (movie_id, person_id) pairs
@@ -94,10 +88,39 @@ def shortest_path(source, target):
 
     If no possible path, returns None.
     """
+    # Initialize the frontier to just the starting point (BFS uses a queue)
+    start = Node(state=source, parent=None, action=None)
+    frontier = QueueFrontier()
+    frontier.add(start)
 
-    # TODO
-    raise NotImplementedError
+    # Initialize an empty explored set
+    explored = set()
 
+    # Loop until we find the solution or exhaust all possibilities
+    while not frontier.empty():
+        # Remove a node from the frontier
+        node = frontier.remove()
+
+        # If it's the target, reconstruct the path
+        if node.state == target:
+            path = []
+            while node.parent is not None:
+                path.append((node.action, node.state))
+                node = node.parent
+            path.reverse()
+            return path
+
+        # Mark node as explored
+        explored.add(node.state)
+
+        # Add neighbors to the frontier
+        for movie_id, person_id in neighbors_for_person(node.state):
+            if not frontier.contains_state(person_id) and person_id not in explored:
+                child = Node(state=person_id, parent=node, action=movie_id)
+                frontier.add(child)
+
+    # If no connection is found
+    return None
 
 def person_id_for_name(name):
     """
@@ -124,7 +147,6 @@ def person_id_for_name(name):
     else:
         return person_ids[0]
 
-
 def neighbors_for_person(person_id):
     """
     Returns (movie_id, person_id) pairs for people
@@ -136,7 +158,6 @@ def neighbors_for_person(person_id):
         for person_id in movies[movie_id]["stars"]:
             neighbors.add((movie_id, person_id))
     return neighbors
-
 
 if __name__ == "__main__":
     main()
